@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Avenches Runner · 本地跑腿取送服务</title>
+<meta name="description" content="Avenches 周边 10 公里跑腿/取送服务 · 价格计算器 · 在线下单 · Twint/Revolut 支付">
+<meta property="og:title" content="Avenches Runner · 本地跑腿取送服务">
+<meta property="og:description" content="Avenches 周边 10 公里跑腿/取送服务 · 价格计算器 · 在线下单 · Twint/Revolut 支付">
+<meta property="og:image" content="og-image.png">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/png" href="favicon.png" />
+<style>
+:root{--bg:#ffffff;--fg:#111827;--muted:#6b7280;--border:#e5e7eb;--accent:#111827;--card:#f8fafc;}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,'Apple Color Emoji','Segoe UI Emoji';color:var(--fg);background:var(--bg)}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.header{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);z-index:10}
+.row{display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:900px){.row-2{grid-template-columns:1fr 1fr}.row-3{grid-template-columns:1fr 1fr 1fr}}
+.h1{font-weight:800;font-size:32px;line-height:1.2;margin:0}
+.p{color:var(--muted);line-height:1.65}
+.btn{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;border-radius:12px;padding:12px 18px;text-decoration:none;font-weight:600;border:1px solid var(--accent)}
+.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-size:12px}
+.card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card h3{margin:0 0 8px;font-size:18px}
+.input,.select,.textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
+.textarea{min-height:84px}
+.label{font-size:12px;color:var(--muted);margin-top:6px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:10px;border-top:1px solid var(--border);text-align:left}
+.small{font-size:12px;color:var(--muted)}
+.footer{border-top:1px solid var(--border);padding:16px 0;margin-top:40px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.langs button{border:1px solid var(--border);background:#fff;padding:6px 10px;border-radius:999px;font-size:13px;cursor:pointer}
+.langs button.active{background:#111827;color:#fff;border-color:#111827}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal .inner{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:16px;border:1px solid var(--border)}
+.modal .inner img{max-width:100%;height:auto;display:block;margin:8px auto;border:1px solid var(--border);border-radius:12px}
+.modal .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.modal .close{border:none;background:#ef4444;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+.mapbox-note{font-size:11px;color:#6b7280}
+.hr{height:1px;background:var(--border);margin:16px 0}
+.mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="height:36px;width:36px;border-radius:12px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:center">🏁</div>
+      <strong id="brand">Avenches Runner</strong>
+      <span class="badge" id="badgeArea">Avenches · 10km</span>
+    </div>
+    <div class="langs">
+      <button data-lang="zh" class="active">中文</button>
+      <button data-lang="fr">Français</button>
+      <button data-lang="de">Deutsch</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="row row-2" style="align-items:center;margin-top:24px">
+    <div>
+      <h1 class="h1" id="heroTitle">Avenches 跑腿 · 本地取送服务</h1>
+      <p class="p" id="heroSubtitle">覆盖 Avenches 周边 10 公里：机场/火车站/仓库取送、餐饮/超市代购、文件代办、临时帮忙。灵活 · 快捷 · 可靠。</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <a id="cta" class="btn" href="https://wa.me/41798888811?text=Bonjour%2C%20je%20souhaite%20un%20devis%20de%20course%2Flivraison%20%C3%A0%20Avenches.">WhatsApp 咨询</a>
+        <span class="badge" id="badgePay">现金 · Twint · Revolut</span>
+      </div>
+    </div>
+    <div class="card" style="height:260px;display:flex;align-items:center;justify-content:center;font-size:64px;background:var(--card)">🚴‍♂️</div>
+  </section>
+
+  <section style="margin-top:24px">
+    <h2 id="servicesTitle" style="margin-bottom:12px">服务项目</h2>
+    <div class="row row-3">
+      <div class="card"><h3 id="svc1t">📦 取送/同城跑腿</h3><div class="p" id="svc1d">火车站/机场/仓库/酒店/门店等，按时取送，有图回执。</div></div>
+      <div class="card"><h3 id="svc2t">🛒 代买代办</h3><div class="p" id="svc2d">餐饮、超市、药店、商店购物；文件递交与简单代办。</div></div>
+      <div class="card"><h3 id="svc3t">🚚 定制与企业</h3><div class="p" id="svc3d">按次/按月套餐，线路排程，简易仓储与本地交接支持。</div></div>
+    </div>
+  </section>
+
+  <section style="margin-top:24px">
+    <h2 id="pricingCalcTitle" style="margin-bottom:8px">价格计算器</h2>
+    <div class="row row-2">
+      <div class="card">
+        <div class="row">
+          <label id="labKm">里程 (km) / Distance
+            <input id="km" class="input" type="number" min="1" value="3">
+          </label>
+          <label id="labPerKm">每公里费用 (只读)
+            <input class="input" value="5" readonly>
+          </label>
+          <label id="labWait">等待分钟 / Attente (min)
+            <input id="wait" class="input" type="number" min="0" value="0">
+          </label>
+          <label style="display:flex;align-items:center;gap:8px"><input id="urgent" type="checkbox"> <span id="labUrgent">加急 (+10)</span></label>
+          <label style="display:flex;align-items:center;gap:8px"><input id="weekend" type="checkbox"> <span id="labWeekend">周末/节假 (+10)</span></label>
+        </div>
+        <div class="card" style="margin-top:10px;background:var(--card)">
+          <div><span id="labBase">基础价（含3km）</span>：CHF <span id="base">20.00</span></div>
+          <div><span id="labExtraKm">额外公里</span>：<span id="extraKm">0</span> × CHF 5 = CHF <span id="extraKmFee">0.00</span></div>
+          <div><span id="labWaitFee">等待费</span>：CHF <span id="waitFee">0.00</span></div>
+          <div id="labSurch">附加费：<span id="labUrgS">加急</span> CHF <span id="urgentFee">0</span>；<span id="labWkS">周末</span> CHF <span id="weekendFee">0</span></div>
+          <div class="label"><span id="labTotal">预估总价</span> / Total: CHF <strong id="total">20.00</strong></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 id="orderTitle">在线下单 / Commande / Auftrag</h3>
+        <div class="row">
+          <input id="pickup" class="input" placeholder="取件地址 / Adresse de retrait / Abholadresse">
+          <input id="dropoff" class="input" placeholder="送达地址 / Adresse de livraison / Lieferadresse">
+          <input id="dt" class="input" type="datetime-local">
+          <select id="size" class="select">
+            <option>≤15kg / ≤100cm</option>
+            <option>15–25kg / ≤120cm</option>
+            <option>大件需沟通 / À confirmer / Nach Rücksprache</option>
+          </select>
+          <div class="row row-2">
+            <input id="name" class="input" placeholder="姓名 / Nom / Name">
+            <input id="phone" class="input" placeholder="电话/WhatsApp">
+          </div>
+          <input id="email" class="input" placeholder="邮箱 E-mail">
+          <textarea id="notes" class="textarea" placeholder="备注 / Remarques / Hinweise"></textarea>
+          <label class="small" style="display:flex;gap:8px;align-items:flex-start">
+            <input id="consent" type="checkbox" style="margin-top:3px">
+            <span id="privacyText">我同意为下单之目的处理我的联系信息（仅用于本次服务联系，不用于广告）。</span>
+          </label>
+          <a id="sendBtn" class="btn" style="opacity:.5;pointer-events:none">通过 WhatsApp 发送订单</a>
+          <div class="small" id="sendHint">点击后将打开 WhatsApp，预填订单详情。需先勾选隐私同意并填写邮箱。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-top:24px">
+    <h2 id="pricingTitle">价格与范围</h2>
+    <div class="card" style="overflow:auto">
+      <table class="table">
+        <thead><tr><th id="colItem">项目 / Item</th><th>CHF</th></tr></thead>
+        <tbody>
+          <tr><td id="itemBase">起步价（含3km）</td><td>20</td></tr>
+          <tr><td id="itemKm">超里程（>3km，每公里）</td><td>5</td></tr>
+          <tr><td id="itemWait">等待（超10分钟/每分钟）</td><td>1</td></tr>
+          <tr><td id="itemUrg">加急</td><td>+10</td></tr>
+          <tr><td id="itemWk">周末/节假</td><td>+10</td></tr>
+        </tbody>
+      </table>
+      <div class="small" id="pricingNote" style="margin-top:6px">备注：价格以系统估算为参考，最终以实际距离与现场情况为准。企业/长期客户可协商套餐。</div>
+    </div>
+  </section>
+
+  <section style="margin-top:24px">
+    <h2 id="mapTitle">服务范围地图与距离估算</h2>
+    <div class="small" id="mapNote">选择常用目的地或输入经纬度/地址估算公里数（仅供参考）。</div>
+    <div class="row row-3" style="margin-top:10px">
+      <div class="card">
+        <div class="label" id="mapPickup">起点：Avenches（固定） · 46.8809, 7.0410</div>
+        <label id="mapCommonLab">常用目的地
+          <select id="common" class="select">
+            <option value="">—</option>
+          </select>
+        </label>
+        <div class="label" id="mapManual">或手动输入坐标</div>
+        <div class="row row-2">
+          <input id="lat" class="input" placeholder="纬度">
+          <input id="lon" class="input" placeholder="经度">
+        </div>
+        <div class="hr"></div>
+        <div class="label" id="addrLab">地址（可选，用于自动地理编码）</div>
+        <input id="addr" class="input" placeholder="地址 / Adresse / Adresse">
+        <input id="mbToken" class="input mono" placeholder="Mapbox Access Token（浏览器本地保存）">
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button id="geocode" class="btn" type="button">地址→经纬度</button>
+          <button id="estimate" class="btn" type="button">估算里程并填入计算器</button>
+        </div>
+        <div class="label">KM ≈ <span id="kmOut">—</span></div>
+        <div class="hr"></div>
+        <div class="label" id="myCommonLab">我的常用目的地（本地保存）</div>
+        <div class="row row-3">
+          <input id="cLabel" class="input" placeholder="名称">
+          <input id="cLat" class="input" placeholder="纬度">
+          <input id="cLon" class="input" placeholder="经度">
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <button id="addCustom" class="btn" type="button">添加</button>
+          <div id="customTags" class="small"></div>
+        </div>
+      </div>
+      <div class="card" style="grid-column:span 2;display:flex;align-items:center;justify-content:center;background:var(--card)">
+        <svg viewBox="0 0 600 300" style="width:100%;height:auto">
+          <rect x="0" y="0" width="600" height="300" fill="#f8fafc" stroke="#e5e7eb"/>
+          <circle cx="200" cy="160" r="6" fill="#111827" />
+          <text x="212" y="164" font-size="12" fill="#111827">Avenches</text>
+          <circle id="destDot" cx="420" cy="120" r="6" fill="#ef4444" style="display:none"/>
+          <text id="destTxt" x="432" y="124" font-size="12" fill="#ef4444" style="display:none">Dest</text>
+          <line id="destLine" x1="200" y1="160" x2="420" y2="120" stroke="#9ca3af" stroke-dasharray="6 6" style="display:none"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-top:24px">
+    <h2 id="payTitle">支付 / Paiement / Zahlung</h2>
+    <div class="row row-3">
+      <div class="card">
+        <h3>Twint</h3>
+        <p class="p" id="twintDesc">下单后发送 Twint 收款二维码，或现场扫码支付。</p>
+        <button id="openTwint" class="btn" type="button">Twint 扫码支付</button>
+      </div>
+      <div class="card">
+        <h3>Revolut</h3>
+        <p class="p" id="revDesc">支持 Revolut 转账（@wcai81）。</p>
+        <a class="btn" target="_blank" rel="noopener" href="https://revolut.me/wcai81" id="revBtn">前往 Revolut 支付</a>
+      </div>
+      <div class="card">
+        <h3 id="cashTitle">现金</h3>
+        <p class="p" id="cashDesc">现场现金也可，提供收据。</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <span id="footerL">© <span id="yr"></span> Avenches Runner · 本地跑腿取送服务</span>
+    <span id="footerR">Avenches · Payerne · Morat/Murten · Estavayer · Email: 42137237@qq.com</span>
+  </div>
+</main>
+
+<!-- Twint Modal -->
+<div id="twintModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="twintTitle">
+  <div class="inner">
+    <div class="head">
+      <strong id="twintTitle">Twint 收款二维码（占位）</strong>
+      <button class="close" id="closeTwint">关闭</button>
+    </div>
+    <div class="p" id="twintHint">请将您的收款二维码图片命名为 <code>twint-qr.png</code> 并放在与本页面相同目录，刷新后这里将显示真实二维码。</div>
+    <img id="twintQR" src="twint-qr.png" alt="Twint QR (placeholder)" onerror="this.src='twint-qr-placeholder.png'">
+  </div>
+</div>
+
+<script>
+// i18n dictionary
+const I18N = {
+  zh: {
+    title: "Avenches Runner · 本地跑腿取送服务",
+    ogt: "Avenches Runner · 本地跑腿取送服务",
+    ogd: "Avenches 周边 10 公里跑腿/取送服务 · 价格计算器 · 在线下单 · Twint/Revolut 支付",
+    heroTitle: "Avenches 跑腿 · 本地取送服务",
+    heroSubtitle: "覆盖 Avenches 周边 10 公里：机场/火车站/仓库取送、餐饮/超市代购、文件代办、临时帮忙。灵活 · 快捷 · 可靠。",
+    cta: "WhatsApp 咨询",
+    badgePay: "现金 · Twint · Revolut",
+    servicesTitle: "服务项目",
+    svc1t: "📦 取送/同城跑腿",
+    svc1d: "火车站/机场/仓库/酒店/门店等，按时取送，有图回执。",
+    svc2t: "🛒 代买代办",
+    svc2d: "餐饮、超市、药店、商店购物；文件递交与简单代办。",
+    svc3t: "🚚 定制与企业",
+    svc3d: "按次/按月套餐，线路排程，简易仓储与本地交接支持。",
+    pricingCalcTitle: "价格计算器",
+    labKm: "里程 (km) / Distance",
+    labPerKm: "每公里费用 (只读)",
+    labWait: "等待分钟 / Attente (min)",
+    labUrgent: "加急 (+10)",
+    labWeekend: "周末/节假 (+10)",
+    labBase: "基础价（含3km）",
+    labExtraKm: "额外公里",
+    labWaitFee: "等待费",
+    labSurch: "附加费：",
+    labUrgS: "加急",
+    labWkS: "周末",
+    labTotal: "预估总价",
+    orderTitle: "在线下单 / Commande / Auftrag",
+    privacyText: "我同意为下单之目的处理我的联系信息（仅用于本次服务联系，不用于广告）。",
+    sendBtn: "通过 WhatsApp 发送订单",
+    sendHint: "点击后将打开 WhatsApp，预填订单详情。需先勾选隐私同意并填写邮箱。",
+    pricingTitle: "价格与范围",
+    colItem: "项目 / Item",
+    itemBase: "起步价（含3km）",
+    itemKm: "超里程（>3km，每公里）",
+    itemWait: "等待（超10分钟/每分钟）",
+    itemUrg: "加急",
+    itemWk: "周末/节假",
+    pricingNote: "备注：价格以系统估算为参考，最终以实际距离与现场情况为准。企业/长期客户可协商套餐。",
+    mapTitle: "服务范围地图与距离估算",
+    mapNote: "选择常用目的地或输入经纬度/地址估算公里数（仅供参考）。",
+    mapPickup: "起点：Avenches（固定） · 46.8809, 7.0410",
+    mapCommonLab: "常用目的地",
+    mapManual: "或手动输入坐标",
+    addrLab: "地址（可选，用于自动地理编码）",
+    myCommonLab: "我的常用目的地（本地保存）",
+    payTitle: "支付 / Paiement / Zahlung",
+    twintDesc: "下单后发送 Twint 收款二维码，或现场扫码支付。",
+    revDesc: "支持 Revolut 转账（@wcai81）。",
+    cashTitle: "现金",
+    cashDesc: "现场现金也可，提供收据。",
+    footerL: "© {year} Avenches Runner · 本地跑腿取送服务",
+    footerR: "Avenches · Payerne · Morat/Murten · Estavayer · Email: 42137237@qq.com",
+    twintTitle: "Twint 收款二维码（占位）",
+    twintHint: "请将您的收款二维码图片命名为 twint-qr.png 并放在与本页面相同目录，刷新后这里将显示真实二维码。"
+  },
+  fr: {
+    title: "Avenches Runner · Courses & Livraisons locales",
+    ogt: "Avenches Runner · Courses & Livraisons locales",
+    ogd: "Zone 10 km autour d’Avenches · Calculateur de prix · Commande WhatsApp · Paiement Twint/Revolut",
+    heroTitle: "Avenches Runner · Courses & Livraisons locales",
+    heroSubtitle: "Zone de 10 km autour d’Avenches : aéroport/gare/entrepôt, achats & démarches, services ponctuels. Rapide · Flexible · Fiable.",
+    cta: "Contacter via WhatsApp",
+    badgePay: "Espèces · Twint · Revolut",
+    servicesTitle: "Prestations",
+    svc1t: "📦 Retrait/Livraison locale",
+    svc1d: "Gare/aéroport/entrepôt/hôtel/magasin, preuve photo à l’arrivée.",
+    svc2t: "🛒 Achats & Démarches",
+    svc2d: "Restauration, supermarché, pharmacie, dépôt de documents, démarches simples.",
+    svc3t: "🚚 Entreprises & Abonnements",
+    svc3d: "Forfaits à la course/au mois, tournées planifiées, micro‑stockage & handover local.",
+    pricingCalcTitle: "Calculateur de prix",
+    labKm: "Distance (km)",
+    labPerKm: "Prix par km (lecture seule)",
+    labWait: "Attente (min)",
+    labUrgent: "Urgent (+10)",
+    labWeekend: "Week‑end/Jours fériés (+10)",
+    labBase: "Prix de base (≤3 km)",
+    labExtraKm: "Km supplémentaires",
+    labWaitFee: "Frais d'attente",
+    labSurch: "Suppléments :",
+    labUrgS: "Urgent",
+    labWkS: "Week‑end",
+    labTotal: "Total estimé",
+    orderTitle: "Commande en ligne",
+    privacyText: "J'accepte le traitement de mes données de contact uniquement pour cette commande (pas de publicité).",
+    sendBtn: "Envoyer la commande via WhatsApp",
+    sendHint: "WhatsApp s’ouvrira avec les détails préremplis. Cochez le consentement et indiquez un e‑mail.",
+    pricingTitle: "Tarifs & Zone",
+    colItem: "Poste / Item",
+    itemBase: "Prix de base (≤3 km)",
+    itemKm: "Au‑delà de 3 km (par km)",
+    itemWait: "Attente (au‑delà de 10 min / par min)",
+    itemUrg: "Urgent",
+    itemWk: "Week‑end/Jours fériés",
+    pricingNote: "Indications à titre estimatif. Tarif final selon distance réelle et conditions. Forfaits pour clients réguliers/entreprises.",
+    mapTitle: "Carte & estimation de distance",
+    mapNote: "Choisissez une destination ou saisissez des coordonnées/adresse (indicatif).",
+    mapPickup: "Départ : Avenches (fixe) · 46.8809, 7.0410",
+    mapCommonLab: "Destinations courantes",
+    mapManual: "ou coordonnées manuelles",
+    addrLab: "Adresse (facultatif, géocodage automatique)",
+    myCommonLab: "Mes destinations courantes (local)",
+    payTitle: "Paiement",
+    twintDesc: "QR Twint envoyé après validation, ou paiement sur place.",
+    revDesc: "Paiement Revolut accepté (@wcai81).",
+    cashTitle: "Espèces",
+    cashDesc: "Paiement en espèces possible. Reçu sur demande.",
+    footerL: "© {year} Avenches Runner · Courses locales",
+    footerR: "Avenches · Payerne · Morat/Murten · Estavayer · Email : 42137237@qq.com",
+    twintTitle: "QR de paiement Twint (exemple)",
+    twintHint: "Placez votre QR sous le nom twint-qr.png au même emplacement que cette page."
+  },
+  de: {
+    title: "Avenches Runner · Lokaler Botendienst",
+    ogt: "Avenches Runner · Lokaler Botendienst",
+    ogd: "10‑km‑Zone um Avenches · Preisrechner · WhatsApp‑Auftrag · Twint/Revolut",
+    heroTitle: "Avenches Runner · Lokaler Botendienst",
+    heroSubtitle: "10‑km‑Radius um Avenches: Flughafen/Bahnhof/Lager, Einkäufe & Behördengänge, spontane Hilfe. Schnell · Flexibel · Zuverlässig.",
+    cta: "Per WhatsApp kontaktieren",
+    badgePay: "Bar · Twint · Revolut",
+    servicesTitle: "Leistungen",
+    svc1t: "📦 Abholung & Zustellung",
+    svc1d: "Bahnhof/Flughafen/Lager/Hotel/Shop – mit Fotobeleg bei Zustellung.",
+    svc2t: "🛒 Einkäufe & Erledigungen",
+    svc2d: "Gastronomie, Supermarkt, Apotheke; Dokumentenabgabe, einfache Amtsgänge.",
+    svc3t: "🚚 Firmen & Abos",
+    svc3d: "Pro Auftrag/Monat, Tourenplanung, Micro‑Lager & lokaler Handover.",
+    pricingCalcTitle: "Preisrechner",
+    labKm: "Distanz (km)",
+    labPerKm: "Preis pro km (nur lesen)",
+    labWait: "Wartezeit (Min)",
+    labUrgent: "Express (+10)",
+    labWeekend: "Wochenende/Feiertag (+10)",
+    labBase: "Grundpreis (≤3 km)",
+    labExtraKm: "Zusätzliche km",
+    labWaitFee: "Wartegebühr",
+    labSurch: "Zuschläge:",
+    labUrgS: "Express",
+    labWkS: "Wochenende",
+    labTotal: "Summe (geschätzt)",
+    orderTitle: "Online‑Auftrag",
+    privacyText: "Ich stimme der Verarbeitung meiner Kontaktdaten nur zur Auftragsabwicklung zu (keine Werbung).",
+    sendBtn: "Bestellung via WhatsApp senden",
+    sendHint: "WhatsApp öffnet sich mit vorausgefüllten Angaben. Zustimmung & E‑Mail erforderlich.",
+    pricingTitle: "Preise & Gebiet",
+    colItem: "Posten / Item",
+    itemBase: "Grundpreis (≤3 km)",
+    itemKm: "Über 3 km (pro km)",
+    itemWait: "Warten (über 10 Min / pro Min)",
+    itemUrg: "Express",
+    itemWk: "Wochenende/Feiertag",
+    pricingNote: "Angaben unverbindlich. Endpreis nach realer Distanz & Situation. Firmen/Stammkunden: Rahmenverträge möglich.",
+    mapTitle: "Karte & Distanzschätzung",
+    mapNote: "Ziel wählen oder Koordinaten/Adresse eingeben (indikativ).",
+    mapPickup: "Start: Avenches (fix) · 46.8809, 7.0410",
+    mapCommonLab: "Häufige Ziele",
+    mapManual: "oder manuelle Koordinaten",
+    addrLab: "Adresse (optional, automatische Geokodierung)",
+    myCommonLab: "Meine häufigen Ziele (lokal)",
+    payTitle: "Zahlung",
+    twintDesc: "Twint‑QR nach Bestätigung oder vor Ort.",
+    revDesc: "Revolut‑Zahlung unterstützt (@wcai81).",
+    cashTitle: "Bar",
+    cashDesc: "Barzahlung möglich. Quittung auf Wunsch.",
+    footerL: "© {year} Avenches Runner · Botendienst",
+    footerR: "Avenches · Payerne · Murten/Morat · Estavayer · E‑Mail: 42137237@qq.com",
+    twintTitle: "Twint‑QR (Platzhalter)",
+    twintHint: "Legen Sie Ihren QR als twint-qr.png im gleichen Ordner wie diese Seite ab."
+  }
+};
+
+// Utility to set text
+function T(id, key, lang){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const txt = I18N[lang][key];
+  if(typeof txt === 'string'){
+    if(key==='title'){
+      document.title = txt;
+      const ogt = document.querySelector('meta[property=\"og:title\"]');
+      const ogd = document.querySelector('meta[property=\"og:description\"]');
+      if(ogt) ogt.setAttribute('content', I18N[lang].ogt);
+      if(ogd) ogd.setAttribute('content', I18N[lang].ogd);
+    } else {
+      el.textContent = txt.replace('{year}', new Date().getFullYear());
+    }
+  }
+}
+
+// Populate language
+function applyLang(lang){
+  T('heroTitle','heroTitle',lang);
+  T('heroSubtitle','heroSubtitle',lang);
+  T('cta','cta',lang);
+  T('badgePay','badgePay',lang);
+  T('servicesTitle','servicesTitle',lang);
+  T('svc1t','svc1t',lang); T('svc1d','svc1d',lang);
+  T('svc2t','svc2t',lang); T('svc2d','svc2d',lang);
+  T('svc3t','svc3t',lang); T('svc3d','svc3d',lang);
+  T('pricingCalcTitle','pricingCalcTitle',lang);
+  T('labKm','labKm',lang); T('labPerKm','labPerKm',lang); T('labWait','labWait',lang);
+  T('labUrgent','labUrgent',lang); T('labWeekend','labWeekend',lang);
+  T('labBase','labBase',lang); T('labExtraKm','labExtraKm',lang); T('labWaitFee','labWaitFee',lang);
+  T('labSurch','labSurch',lang); T('labUrgS','labUrgS',lang); T('labWkS','labWkS',lang);
+  T('labTotal','labTotal',lang);
+  T('orderTitle','orderTitle',lang); T('privacyText','privacyText',lang);
+  T('sendBtn','sendBtn',lang); T('sendHint','sendHint',lang);
+  T('pricingTitle','pricingTitle',lang); T('colItem','colItem',lang);
+  T('itemBase','itemBase',lang); T('itemKm','itemKm',lang); T('itemWait','itemWait',lang);
+  T('itemUrg','itemUrg',lang); T('itemWk','itemWk',lang); T('pricingNote','pricingNote',lang);
+  T('mapTitle','mapTitle',lang); T('mapNote','mapNote',lang);
+  T('mapPickup','mapPickup',lang); T('mapCommonLab','mapCommonLab',lang); T('mapManual','mapManual',lang);
+  T('addrLab','addrLab',lang); T('myCommonLab','myCommonLab',lang);
+  T('payTitle','payTitle',lang); T('twintDesc','twintDesc',lang);
+  T('revDesc','revDesc',lang); T('cashTitle','cashTitle',lang); T('cashDesc','cashDesc',lang);
+  T('footerL','footerL',lang); T('footerR','footerR',lang);
+  T('twintTitle','twintTitle',lang); T('twintHint','twintHint',lang);
+  T('title','title',lang);
+}
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+// WhatsApp cta always points to your number
+document.getElementById('cta').setAttribute('href','https://wa.me/41798888811');
+
+// language toggles
+document.querySelectorAll('.langs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.langs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    applyLang(btn.dataset.lang);
+  });
+});
+
+applyLang('zh');
+
+// Pricing calculator
+const kmI = document.getElementById('km');
+const waitI = document.getElementById('wait');
+const urgentI = document.getElementById('urgent');
+const weekendI = document.getElementById('weekend');
+function recalc(){
+  const base = 20;
+  const perKm = 5;
+  const km = Math.max(1, Number(kmI.value||0));
+  const extraKm = Math.max(0, km - 3);
+  const extraKmFee = extraKm * perKm;
+  const wait = Math.max(0, Number(waitI.value||0));
+  const waitFee = Math.max(0, wait - 10) * 1;
+  const urgentFee = urgentI.checked ? 10 : 0;
+  const weekendFee = weekendI.checked ? 10 : 0;
+  const total = base + extraKmFee + waitFee + urgentFee + weekendFee;
+  document.getElementById('extraKm').textContent = extraKm.toFixed(0);
+  document.getElementById('extraKmFee').textContent = extraKmFee.toFixed(2);
+  document.getElementById('waitFee').textContent = waitFee.toFixed(2);
+  document.getElementById('urgentFee').textContent = urgentFee.toFixed(0);
+  document.getElementById('weekendFee').textContent = weekendFee.toFixed(0);
+  document.getElementById('total').textContent = total.toFixed(2);
+}
+[kmI, waitI, urgentI, weekendI].forEach(el=>el.addEventListener('input', recalc));
+recalc();
+
+// Order form
+const pickup = document.getElementById('pickup');
+const dropoff = document.getElementById('dropoff');
+const dt = document.getElementById('dt');
+const size = document.getElementById('size');
+const nameI = document.getElementById('name');
+const phoneI = document.getElementById('phone');
+const emailI = document.getElementById('email');
+const notesI = document.getElementById('notes');
+const consentI = document.getElementById('consent');
+const sendBtn = document.getElementById('sendBtn');
+
+function updateSend(){
+  const ok = pickup.value && dropoff.value && dt.value && nameI.value && phoneI.value && emailI.value && consentI.checked;
+  sendBtn.style.opacity = ok ? '1' : '.5';
+  sendBtn.style.pointerEvents = ok ? 'auto' : 'none';
+  if(ok){
+    const total = document.getElementById('total').textContent;
+    const text = `Avenches Runner 订单
+取件: ${pickup.value}
+送达: ${dropoff.value}
+时间: ${dt.value}
+体积/重量: ${size.value}
+里程: ${kmI.value} km
+等待: ${waitI.value} 分钟
+加急: ${urgentI.checked ? '是':'否'}
+周末/节假: ${weekendI.checked ? '是':'否'}
+报价(估算): ${total} CHF
+联系人: ${nameI.value}
+电话/WhatsApp: ${phoneI.value}
+邮箱: ${emailI.value}
+隐私同意: ${consentI.checked ? '已同意':'未同意'}
+支付偏好: Revolut @wcai81 / Twint / Cash
+备注: ${notesI.value}`;
+    sendBtn.href = 'https://wa.me/41798888811?text=' + encodeURIComponent(text);
+  }
+}
+[pickup,dropoff,dt,size,nameI,phoneI,emailI,notesI,consentI].forEach(el=>el.addEventListener('input', updateSend));
+updateSend();
+
+// Haversine
+function haversineKm(a, b){
+  const toRad = d => d*Math.PI/180;
+  const R = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(Math.abs(dLon)/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+const ORIGIN = { lat:46.8809, lon:7.0410 };
+const PRESET = [
+  { label:'Payerne', lat:46.8215, lon:6.9385 },
+  { label:'Morat / Murten', lat:46.9287, lon:7.1170 },
+  { label:'Estavayer-le-Lac', lat:46.8498, lon:6.8465 },
+  { label:'Fribourg', lat:46.8065, lon:7.1619 },
+  { label:'Lausanne', lat:46.5197, lon:6.6323 },
+  { label:'Bern', lat:46.9481, lon:7.4474 },
+  { label:'Neuchâtel', lat:46.9896, lon:6.9293 },
+  { label:'Yverdon-les-Bains', lat:46.7785, lon:6.6412 },
+  { label:'Neuenburg Ost (示例点)', lat:47.0000, lon:6.9500 },
+  { label:'Biel/Bienne', lat:47.1375, lon:7.2468 }
+];
+const common = document.getElementById('common');
+function loadCustom(){ try{ return JSON.parse(localStorage.getItem('ar_custom_dests')||'[]'); }catch{return []}}
+function refreshCommon(){
+  common.innerHTML = '<option value=\"\">—</option>';
+  PRESET.concat(loadCustom()).forEach(d=>{
+    const opt = document.createElement('option');
+    opt.value = d.label; opt.textContent = d.label; opt.dataset.lat=d.lat; opt.dataset.lon=d.lon;
+    common.appendChild(opt);
+  });
+}
+refreshCommon();
+const latI = document.getElementById('lat');
+const lonI = document.getElementById('lon');
+common.addEventListener('change',()=>{
+  const opt = common.selectedOptions[0];
+  if(!opt || !opt.dataset.lat) return;
+  latI.value = opt.dataset.lat;
+  lonI.value = opt.dataset.lon;
+});
+
+// Mapbox geocoding (optional)
+const addrI = document.getElementById('addr');
+const mbTokenI = document.getElementById('mbToken');
+mbTokenI.value = localStorage.getItem('ar_mb_token')||'';
+mbTokenI.addEventListener('input',()=>localStorage.setItem('ar_mb_token', mbTokenI.value));
+document.getElementById('geocode').addEventListener('click', async ()=>{
+  const addr = addrI.value.trim();
+  const tok = mbTokenI.value.trim();
+  if(!addr || !tok){ alert('请先填写地址与 Mapbox Token'); return; }
+  try{
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addr)}.json?access_token=${tok}&limit=1`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const feat = data && data.features && data.features[0];
+    if(feat && feat.center){
+      const [lo, la] = feat.center;
+      latI.value = la; lonI.value = lo;
+    }else{
+      alert('未找到地址的坐标');
+    }
+  }catch(e){ alert('地理编码失败'); }
+});
+
+// Estimate and inject KM
+const destDot = document.getElementById('destDot');
+const destTxt = document.getElementById('destTxt');
+const destLine = document.getElementById('destLine');
+document.getElementById('estimate').addEventListener('click',()=>{
+  const la = parseFloat(latI.value), lo = parseFloat(lonI.value);
+  if(isNaN(la)||isNaN(lo)){ alert('请先填写/解析目的地经纬度'); return; }
+  const km = Math.round(haversineKm(ORIGIN,{lat:la,lon:lo})*10)/10;
+  document.getElementById('kmOut').textContent = km.toFixed(1);
+  kmI.value = km; recalc(); updateSend();
+  destDot.style.display = destTxt.style.display = destLine.style.display = 'block';
+});
+
+// Custom quick list
+function renderCustomTags(){
+  const box = document.getElementById('customTags');
+  const list = loadCustom();
+  box.innerHTML = '';
+  list.forEach(d=>{
+    const span = document.createElement('span');
+    span.style.border='1px solid var(--border)'; span.style.borderRadius='8px'; span.style.padding='4px 8px'; span.style.marginRight='6px';
+    span.textContent = d.label + ' ✕';
+    span.style.cursor='pointer';
+    span.addEventListener('click',()=>{
+      const next = list.filter(x=>x.label!==d.label);
+      localStorage.setItem('ar_custom_dests', JSON.stringify(next));
+      refreshCommon(); renderCustomTags();
+    });
+    box.appendChild(span);
+  });
+}
+renderCustomTags();
+document.getElementById('addCustom').addEventListener('click',()=>{
+  const lab = document.getElementById('cLabel').value.trim();
+  const la = parseFloat(document.getElementById('cLat').value);
+  const lo = parseFloat(document.getElementById('cLon').value);
+  if(!lab || isNaN(la) || isNaN(lo)) return;
+  const list = loadCustom(); list.push({label:lab, lat:la, lon:lo});
+  localStorage.setItem('ar_custom_dests', JSON.stringify(list));
+  document.getElementById('cLabel').value=''; document.getElementById('cLat').value=''; document.getElementById('cLon').value='';
+  refreshCommon(); renderCustomTags();
+});
+
+// Twint modal
+const twModal = document.getElementById('twintModal');
+document.getElementById('openTwint').addEventListener('click',()=>{ twModal.style.display='flex'; });
+document.getElementById('closeTwint').addEventListener('click',()=>{ twModal.style.display='none'; });
+twModal.addEventListener('click', (e)=>{ if(e.target===twModal) twModal.style.display='none'; });
+</script>
+</body>
+</html>
